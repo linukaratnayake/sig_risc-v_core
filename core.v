@@ -29,26 +29,17 @@ module core (
 	assign func3 = instruction[14:12];
 
 	assign write_data = mem_write;
-
-	localparam BUS_WIDTH = 32;
-
-	localparam DATA_MEMORY_ADDR_BUS_WIDTH = 32;
-    localparam DATA_MEMORY_DATA_BUS_WIDTH = 32;
-    localparam REG_FILE_ADDR_BUS_WIDTH = 5;
-    localparam REG_FILE_DATA_BUS_WIDTH = 32;
-    localparam INST_MEMORY_ADDR_BUS_WIDTH = 32;
-    localparam INST_MEMORY_DATA_BUS_WIDTH = 32;
      
     // Wires for module instantiation, and connections
-    wire [INST_MEMORY_ADDR_BUS_WIDTH - 1:0] pc_4;
-    wire [BUS_WIDTH - 1:0] imm_ext;
-    wire [DATA_MEMORY_ADDR_BUS_WIDTH - 1:0] alu_result;
-    wire [REG_FILE_DATA_BUS_WIDTH - 1:0] read_data_1;
-    wire [REG_FILE_DATA_BUS_WIDTH - 1:0] read_data_2;
-	wire [REG_FILE_DATA_BUS_WIDTH - 1:0] write_data_out;
-    wire [BUS_WIDTH - 1:0] src_a;
-    wire [BUS_WIDTH - 1:0] src_b;
-    wire [BUS_WIDTH - 1:0] pc_target;
+    wire [31:0] pc_4;
+    wire [31:0] imm_ext;
+    wire [31:0] alu_result;
+    wire [31:0] read_data_1;
+    wire [31:0] read_data_2;
+	wire [31:0] write_data_out;
+    wire [31:0] src_a;
+    wire [31:0] src_b;
+    wire [31:0] pc_target;
 
     wire zero;
     wire pc_src;
@@ -61,11 +52,11 @@ module core (
 
     assign src_a = read_data_1;
     assign src_b = alu_src ? imm_ext : read_data_2;
-    assign write_data_out = result_src == 2'b00 ? alu_result : (result_src == 2'b01 ? read_data : {{BUS_WIDTH - INST_MEMORY_ADDR_BUS_WIDTH{1'b0}}, pc_4});
-    assign next_pc = pc_src ? pc_target[INST_MEMORY_ADDR_BUS_WIDTH - 1:0] : pc_4;
+    assign write_data_out = result_src == 2'b00 ? alu_result : (result_src == 2'b01 ? read_data : pc_4);
+    assign next_pc = pc_src ? pc_target[31:0] : pc_4;
 
     // Instantiate control module
-    control # (BUS_WIDTH) control_inst (
+    control # (32) control_inst (
         .zero(zero),
         .instruction(instruction),
         .pc_src(pc_src),
@@ -78,21 +69,21 @@ module core (
     );
 
     // Instantiate adder for adding 4 to pc
-    adder # (32) adder_inst1 (
+    adder adder_inst1 (
         .a(pc),
         .b({{28{1'b0}}, 4'b0100}),
         .y(pc_4)
     );
 
     // Instantiate adder for adding pc and imm_ext
-    adder # (BUS_WIDTH) adder_inst2 (
+    adder adder_inst2 (
         .a({pc}),
         .b(imm_ext),
         .y(pc_target)
     );
    
     // Insntiate register_file module
-    register_file #(REG_FILE_ADDR_BUS_WIDTH, REG_FILE_DATA_BUS_WIDTH) register_file_inst (
+    register_file #(5, 32) register_file_inst (
         .clk(clk),
         .addr1(instruction[19:15]),
         .addr2(instruction[24:20]),
@@ -104,14 +95,14 @@ module core (
     );
 
     // Insntiate extend module
-    extend #(BUS_WIDTH) extend_inst (
+    extend #(32) extend_inst (
         .imm_src(imm_src),
         .instruction(instruction),
         .extended_imm(imm_ext)
     );
 
     // Insntiate alu module
-    alu #(BUS_WIDTH) alu_inst (
+    alu alu_inst (
         .src_a(src_a),
         .src_b(src_b),
         .alu_op(alu_control),
@@ -122,14 +113,11 @@ module core (
 endmodule
 
 module alu
-    #(
-        parameter BUS_WIDTH = 32
-    )
     (
-        input [BUS_WIDTH - 1:0] src_a,
-        input [BUS_WIDTH - 1:0] src_b,
+        input [31:0] src_a,
+        input [31:0] src_b,
         input [2:0] alu_op,
-        output reg [BUS_WIDTH - 1:0] alu_result,
+        output reg [31:0] alu_result,
         output reg zero
     );
 
@@ -148,9 +136,9 @@ module alu
             3'b011: alu_result = src_a & src_b;
             3'b101: begin
                 if (src_a < src_b)
-                    alu_result = {{BUS_WIDTH - 1{1'b0}}, 1'b1};
+                    alu_result = {{31{1'b0}}, 1'b1};
                 else
-                    alu_result = {BUS_WIDTH{1'b0}};
+                    alu_result = {32{1'b0}};
             end
             3'b110: alu_result = src_b;
             default: alu_result = 0;
@@ -419,10 +407,9 @@ module register_file
 endmodule
 
 module adder
-    # (parameter BUS_WIDTH = 16)
     (
-    input wire [BUS_WIDTH - 1:0] a, b,
-    output wire [BUS_WIDTH - 1:0] y
+    input wire [31:0] a, b,
+    output wire [31:0] y
     );
 
     assign  y = a + b;
