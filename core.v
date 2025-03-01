@@ -206,76 +206,64 @@ module control_main_decoder
 
     always @(opcode)
     begin
+        // Default values
+        branch = 1'b0;
+        result_src = 2'b00;
+        mem_write = 1'b0;
+        alu_src = 1'b0;
+        imm_src = 3'b000;
+        reg_write = 1'b0;
+        alu_op = 2'b00;
+        jump = 1'b0;
+
         case(opcode)
-            7'd3: begin //lw (I type)
-                branch = 1'b0;
+            7'd3: begin // lw (I type)
                 result_src = 2'b01;
-                mem_write = 1'b0;
                 alu_src = 1'b1;
-                imm_src = 3'b000;
                 reg_write = 1'b1;
-                alu_op = 2'b00;
-                jump = 1'b0;
             end
-            7'd35: begin    // sw (S type)
-                branch = 1'b0;
-                result_src = 2'bxx;
+            7'd35: begin // sw (S type)
                 mem_write = 1'b1;
                 alu_src = 1'b1;
                 imm_src = 3'b001;
-                reg_write = 1'b0;
-                alu_op = 2'b00;
-                jump = 1'b0;
             end
-            7'd51: begin // or (R type)
-                branch = 1'b0;
-                result_src = 2'b00;
-                mem_write = 1'b0;
-                alu_src = 1'b0;
-                imm_src = 3'bxxx;
+            7'd51: begin // R type
                 reg_write = 1'b1;
                 alu_op = 2'b10;
-                jump = 1'b0;
             end
-            7'd99: begin  // beq (B type)
+            7'd99: begin // beq (B type)
                 branch = 1'b1;
-                result_src = 2'bxx;
-                mem_write = 1'b0;
-                alu_src = 1'b0;
                 imm_src = 3'b010;
-                reg_write = 1'b0;
                 alu_op = 2'b01;
-                jump = 1'b0;
             end
-            7'd19: begin  // addi (I type)
-                branch = 1'b0;
-                result_src = 2'b00;
-                mem_write = 1'b0;
+            7'd19: begin // addi (I type)
                 alu_src = 1'b1;
-                imm_src = 3'b000;
                 reg_write = 1'b1;
                 alu_op = 2'b10;
-                jump = 1'b0;
             end
-            7'd111: begin    // jal (J type)
-                branch = 1'b0;
+            7'd111: begin // jal (J type)
                 result_src = 2'b10;
-                mem_write = 1'b0;
-                alu_src = 1'bx;
                 imm_src = 3'b011;
                 reg_write = 1'b1;
-                alu_op = 2'bxx;
                 jump = 1'b1;
             end
-            7'd55: begin    // lui (U type)
-                branch = 1'b0;
-                result_src = 2'b00;
-                mem_write = 1'b0;
+            7'd55: begin // lui (U type)
                 alu_src = 1'b1;
                 imm_src = 3'b100;
                 reg_write = 1'b1;
                 alu_op = 2'b11;
-                jump = 1'b0;
+            end
+            7'd23: begin // auipc (U type)
+                alu_src = 1'b1;
+                imm_src = 3'b100;
+                reg_write = 1'b1;
+            end
+            7'd103: begin // jalr (I type)
+                result_src = 2'b10;
+                alu_src = 1'b1;
+                imm_src = 3'b000;
+                reg_write = 1'b1;
+                jump = 1'b1;
             end
             default: begin
                 branch = 1'bx;
