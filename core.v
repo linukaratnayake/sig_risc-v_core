@@ -85,6 +85,7 @@ module core (
     // Insntiate register_file module
     register_file #(5, 32) register_file_inst (
         .clk(clk),
+        .rst(rst),
         .addr1(instruction[19:15]),
         .addr2(instruction[24:20]),
         .addr3(instruction[11:7]),
@@ -362,6 +363,7 @@ module register_file
     )
     (
         input clk,
+        input rst,
         input [ADDR_BUS_WIDTH - 1:0] addr1,
         input [ADDR_BUS_WIDTH - 1:0] addr2,
         input [ADDR_BUS_WIDTH - 1:0] addr3,
@@ -373,7 +375,7 @@ module register_file
 
     localparam MEM_DEPTH = 32;
 
-    reg [DATA_BUS_WIDTH - 1:0] mem [0:MEM_DEPTH - 1];
+    reg [0:MEM_DEPTH - 1][DATA_BUS_WIDTH - 1:0] mem;
     
     // Register 0 is always 0.
     assign read_data1 = addr1 == 5'b00000 ? {32{1'b0}} : mem[addr1];
@@ -384,6 +386,11 @@ module register_file
         mem[5] = 32'h00000006;
         mem[9] = 32'h00002004;
 	end
+
+    always @(posedge rst)
+    begin
+        mem = 0;
+    end
 
     always @(negedge clk)
     begin
