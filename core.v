@@ -387,9 +387,10 @@ module register_file
         mem[9] = 32'h00002004;
 	end
 
-    always @(posedge rst)
+    always @(posedge clk)
     begin
-        mem = 0;
+        if(rst)
+            mem = 0;
     end
 
     always @(negedge clk)
